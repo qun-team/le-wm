@@ -327,17 +327,37 @@ def load_dataset_samples(
 
 @torch.no_grad()
 def encode_sequences(model, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-    """Encode sequences and compute one-step predictions."""
+    """Encode sequences and compute one-step predictions.
+
+    `analysis_prediction_space` lets hybrid models report prediction metrics in
+    the same space they were trained in, while leaving the embedding/topology
+    analysis on the normalized encoder manifold by default.
+    """
     info = model.encode({"pixels": batch["pixels"], "action": batch["action"]})
     emb = info["emb"]
+    emb_raw = info.get("emb_raw", emb)
     act_emb = info["act_emb"]
 
     ctx_len = infer_history_size(model)
-    pred = model.predict(emb[:, :ctx_len], act_emb[:, :ctx_len])
-    tgt = emb[:, 1:]
+    analysis_space = getattr(model, "analysis_prediction_space", "normalized").lower()
+    if analysis_space == "sphere":
+        analysis_space = "normalized"
+
+    pred_raw = model.predict_raw(emb[:, :ctx_len], act_emb[:, :ctx_len]) if hasattr(model, "predict_raw") else model.predict(
+        emb[:, :ctx_len], act_emb[:, :ctx_len]
+    )
+    pred_norm = model.predict(emb[:, :ctx_len], act_emb[:, :ctx_len])
+
+    if analysis_space == "raw":
+        pred = pred_raw
+        tgt = emb_raw[:, 1:]
+    else:
+        pred = pred_norm
+        tgt = emb[:, 1:]
 
     return {
         "emb": emb,
+        "emb_raw": emb_raw,
         "pred": pred,
         "tgt": tgt,
         "action": batch["action"],
@@ -1045,7 +1065,6 @@ def build_parser() -> argparse.ArgumentParser:
 def main():
     parser = build_parser()
     args = parser.parse_args()
-
     result, outputs = run_analysis(
         ckpt=args.ckpt,
         dataset=args.dataset,

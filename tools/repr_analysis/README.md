@@ -290,6 +290,7 @@ Notes:
 - `pred_target_cosine_mean` is now the **true cosine similarity**, not an unnormalised dot product.
 - This makes it much more appropriate for comparing SWM-like cosine-trained models against LeWM/SIGReg models.
 - `pred_error_mean` is still useful, but it is scale-dependent and should not be the only cross-method comparison metric.
+- for hybrid SWM variants, the analysis now follows the model's configured prediction space automatically, so Dynamics metrics compare raw-vs-raw or normalized-vs-normalized consistently
 
 ### Action Effect
 
