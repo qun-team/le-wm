@@ -999,6 +999,7 @@ def run_analysis(
             "history_size": history_size,
             "device": device,
             "analysis_prediction_space": getattr(model, "analysis_prediction_space", "normalized"),
+            "training_context_space": getattr(model, "training_context_space", "normalized"),
             "inference_rollout_state_space": getattr(model, "inference_rollout_state_space", "normalized"),
             "inference_cost_space": getattr(model, "inference_cost_space", "normalized"),
             "inference_cost_type": getattr(model, "inference_cost_type", "cosine"),
